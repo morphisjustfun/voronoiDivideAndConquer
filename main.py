@@ -1,6 +1,8 @@
 from __future__ import annotations
 from math import sqrt
 import numpy as np
+from plotHelper import getPlot
+from random import randint
 
 # n is going to be the size of the square matrix
 # seeds are going to be the seeds of the matrix (voronoi)
@@ -33,6 +35,33 @@ class Seed:
     def distance(self, point: tuple[int, int]) -> float:
         return sqrt((self[0] - point[0])**2 + (self[1] - point[1])**2)
 
+    def __str__(self):
+        return f"Seed({self.id}, {self.x}, {self.y})"
+
+    def __repr__(self):
+        return f"Seed({self.id}, {self.x}, {self.y})"
+
+# get random different seeds
+
+
+def getRandomSeeds(n: int, k: int) -> list[Seed]:
+    seeds = []
+    for i in range(k):
+        while True:
+            x = randint(0, n - 1)
+            y = randint(0, n - 1)
+            seed = Seed(i, x, y)
+            if seed not in seeds:
+                seeds.append(seed)
+                break
+    return seeds
+
+# transform list of tuples into list of seeds
+
+
+def getSeeds(seeds: list[tuple[int, int]]) -> list[Seed]:
+    return [Seed(i+1, x, y) for i, (x, y) in enumerate(seeds)]
+
 
 class VoronoiDiagram:
     n: int
@@ -57,6 +86,7 @@ class VoronoiDiagram:
     def getDiagramHelper(self, corners: list[tuple[int, int]]):
         # calculate the closest seed to each corner
         closestSeed = []
+        getPlot(self.matrix, self.seeds)
         for corner in corners:
             closestSeed.append(self.seeds[0])
             for seed in self.seeds:
@@ -144,13 +174,12 @@ class VoronoiDiagram:
 
 if __name__ == "__main__":
     # define seeds
-    seeds = []
-    seeds.append(Seed(1, 1, 1))
-    seeds.append(Seed(2, 7, 0))
-    seeds.append(Seed(3, 6, 6))
     # define matrix
-    n = 2 ** 13
+    n = 2 ** 5
+    seeds = getRandomSeeds(n, 10)
+    # seeds = getSeeds([(21, 377), (50, 870), (80, 197), (149, 279), (243, 905), (316, 453), (339, 164), (462, 833), (463, 878), (548, 16), (563, 575), (565, 700), (604, 882), (664, 170), (832, 892), (837, 256), (866, 558), (907, 348), (918, 943), (992, 844)])
     voronoiDiagram = VoronoiDiagram(n, seeds)
     voronoiDiagram.getDiagramHelper(
         [(0, 0), (n - 1, 0), (n - 1, n - 1), (0, n - 1)])
-    print(voronoiDiagram.matrix)
+
+    getPlot(voronoiDiagram.matrix, voronoiDiagram.seeds)
