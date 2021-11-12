@@ -21,6 +21,5 @@ def getPlot(matrix, seeds):
     cmap = matplotlib.colors.ListedColormap(getRandomColors(len(seeds)), name = 'colors', N=None)
     plt.imshow(matrix, cmap=cmap)
     # plt.scatter(100,100, s=102.4, c="white", edgecolors=["black"])
-    # plt.show()
-    plt.pause(0.1)
+    plt.pause(0.00001)
     plt.draw()
