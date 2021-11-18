@@ -402,8 +402,14 @@ void *getDiagramHelperThreaded(void *context) {
     free(secondQuadrantCorners);
     free(thirdQuadrantCorners);
     free(fourthQuadrantCorners);
+
+    free(args1);
+    free(args2);
+    free(args3);
+    free(args4);
   }
-}
+  return NULL;
+};
 
 /*
   def getRandomSeeds(n: int, k: int) -> list[Seed]:
@@ -461,7 +467,7 @@ void printfVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
 }
 
 int main(int argc, char *argv[]) {
-  /* srand(time(NULL)); */
+  srand(time(NULL));
   // get length int from argv[2]
   int length2 = atoi(argv[2]);
   // get number of seeds int from argv[3]
@@ -546,6 +552,8 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < numberofSeeds; i++) {
     free(seeds[i]);
   }
+
+  free(args);
 
   free(seeds);
   return 0;
