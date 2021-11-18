@@ -466,9 +466,10 @@ struct Seed **getSeeds(int matrixSize, int numberSeeds) {
 };
 
 void printfVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
+  char str[] = "$@B\%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'.";
   for (int i = 0; i < voronoiDiagram->n; i++) {
     for (int j = 0; j < voronoiDiagram->n; j++) {
-      printf("%d ", voronoiDiagram->matrix[i][j]);
+      printf("%c%c", (char)str[voronoiDiagram->matrix[i][j]%sizeof(str)]-1, (char)str[voronoiDiagram->matrix[i][j]%sizeof(str)]-1);
     }
     printf("\n");
   }
@@ -531,6 +532,7 @@ int main(int argc, char *argv[]) {
     double time_spent = (double)(end.tv_sec - start.tv_sec) +
                         (double)(end.tv_usec - start.tv_usec) / 1000000;
     printf("Threaded: %f\n", time_spent);
+    printfVoronoiMatrix(voronoiDiagram);
   } else {
     /* clock_t begin2 = clock(); */
     /* getDiagramHelperNonThreaded(corners, voronoiDiagram); */
@@ -545,6 +547,7 @@ int main(int argc, char *argv[]) {
     double time_spent = (double)(end.tv_sec - start.tv_sec) +
                         (double)(end.tv_usec - start.tv_usec) / 1000000;
     printf("Non threaded: %f\n", time_spent);
+    printfVoronoiMatrix(voronoiDiagram);
   }
 
   for (int i = 0; i < voronoiDiagram->seedsCount; i++) {
