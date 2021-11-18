@@ -11,9 +11,12 @@ def getRandomColors(n):
     global colorsDone
     if colorsDone:
         return colors
-    for _ in range(n * 30):
+    for i in range(n * 30):
         # colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([random.random(), 1, 1])))
-        colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([random.random(), 1, 1])))
+        if i == 0:
+            colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([0, 0, 1])))
+        else:
+            colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([random.random(), 1, 1])))
     colorsDone = True
     return colors
 
