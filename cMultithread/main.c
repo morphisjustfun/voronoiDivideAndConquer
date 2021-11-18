@@ -7,6 +7,8 @@
 #include <sys/time.h>
 #include <time.h>
 
+static int threadsNumber = 1;
+
 struct Seed {
   int id;
   int x;
@@ -24,6 +26,7 @@ struct VoronoiDiagram {
 struct VoronoiArguments {
   struct VoronoiDiagram *diagram;
   int **corners;
+  int threadCounter;
 };
 
 struct VoronoiDiagram *constructorVoronoiDiagram(int n, struct Seed **seeds,
@@ -222,6 +225,7 @@ void getDiagramHelperNonThreaded(int **corners,
 void *getDiagramHelperThreaded(void *context) {
   struct VoronoiArguments *args = (struct VoronoiArguments *)context;
   struct VoronoiDiagram *voronoiDiagram = args->diagram;
+  int threadCounter = args->threadCounter;
   int **corners = args->corners;
 
   int countCorners = 4;
@@ -350,23 +354,27 @@ void *getDiagramHelperThreaded(void *context) {
         (struct VoronoiArguments *)malloc(sizeof(struct VoronoiArguments));
     args1->diagram = voronoiDiagram;
     args1->corners = firstQuadrantCorners;
+    args1->threadCounter = threadCounter + 1;
 
     struct VoronoiArguments *args2 =
         (struct VoronoiArguments *)malloc(sizeof(struct VoronoiArguments));
     args2->diagram = voronoiDiagram;
     args2->corners = secondQuadrantCorners;
+    args2->threadCounter = threadCounter + 1;
 
     struct VoronoiArguments *args3 =
         (struct VoronoiArguments *)malloc(sizeof(struct VoronoiArguments));
     args3->diagram = voronoiDiagram;
     args3->corners = thirdQuadrantCorners;
+    args3->threadCounter = threadCounter + 1;
 
     struct VoronoiArguments *args4 =
         (struct VoronoiArguments *)malloc(sizeof(struct VoronoiArguments));
     args4->diagram = voronoiDiagram;
     args4->corners = fourthQuadrantCorners;
+    args4->threadCounter = threadCounter + 1;
 
-    if (voronoiDiagram->counterThread == 1) {
+    if (threadCounter <= threadsNumber) {
       voronoiDiagram->counterThread++;
       pthread_t thread_1;
       pthread_t thread_2;
@@ -467,7 +475,8 @@ void printfVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
 }
 
 int main(int argc, char *argv[]) {
-  srand(time(NULL));
+   threadsNumber = atoi(argv[4]);
+  /* srand(time(NULL)); */
   // get length int from argv[2]
   int length2 = atoi(argv[2]);
   // get number of seeds int from argv[3]
@@ -504,6 +513,7 @@ int main(int argc, char *argv[]) {
 
   args->diagram = voronoiDiagram;
   args->corners = corners;
+  args->threadCounter = 1;
 
   /* getDiagramHelperNonThreaded(corners, voronoiDiagram); */
 
