@@ -466,17 +466,19 @@ struct Seed **getSeeds(int matrixSize, int numberSeeds) {
 };
 
 void printfVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
-  char str[] = "$@B\%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'.";
+  char str[] = "$@B\%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/"
+               "\\|()1{}[]?-_+~<>i!lI;:,\"^`'.";
   for (int i = 0; i < voronoiDiagram->n; i++) {
     for (int j = 0; j < voronoiDiagram->n; j++) {
-      printf("%c%c", (char)str[voronoiDiagram->matrix[i][j]%sizeof(str)]-1, (char)str[voronoiDiagram->matrix[i][j]%sizeof(str)]-1);
+      printf("%c%c", (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] - 1,
+             (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] - 1);
     }
     printf("\n");
   }
 }
 
 int main(int argc, char *argv[]) {
-   threadsNumber = atoi(argv[4]);
+  threadsNumber = atoi(argv[4]);
   /* srand(time(NULL)); */
   // get length int from argv[2]
   int length2 = atoi(argv[2]);
