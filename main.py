@@ -13,6 +13,8 @@ def getMatrixFromCFunction(n, seeds, threads, threaded = 1, filename = "cMultith
     return matrix
 
 if __name__ == '__main__':
-    # print(getMatrixFromCFunction(6, 9, 3))
+    # set location of script to location of this file
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     matrix = getMatrixFromCFunction(3, 9, 3)
     print(matrix)
