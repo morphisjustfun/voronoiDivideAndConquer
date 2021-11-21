@@ -111,8 +111,8 @@ if __name__ == '__main__':
 
     meters = 1000
     scale = 2**26
+    amenity = AMENITIES[5]
     # amenity = AMENITIES[17]
-    amenity = AMENITIES[17]
     coordinates = getMyCoordinates()
     dataOverpass = getHospitalsQuery(meters, amenity, coordinates[0], coordinates[1])
     matrixSeeds, n, originTransformed, pointsData = getMatrixFormatted(dataOverpass, coordinates, scale)
