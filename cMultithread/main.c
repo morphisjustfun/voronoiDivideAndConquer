@@ -470,16 +470,31 @@ void printfVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
                "\\|()1{}[]?-_+~<>i!lI;:,\"^`'.";
   for (int i = 0; i < voronoiDiagram->n; i++) {
     for (int j = 0; j < voronoiDiagram->n; j++) {
-      printf("%c%c", (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] - 1,
-             (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] - 1);
+      /* printf("%c%c", (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] -
+       * 1, */
+      /*        (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] - 1); */
+      printf("%d%d", voronoiDiagram->matrix[i][j],
+             voronoiDiagram->matrix[i][j]);
     }
     printf("\n");
   }
 }
 
+// write to a file output.txt the matrix of the voronoi diagram
+void writeVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
+  FILE *file = fopen("output.txt", "w");
+  for (int i = 0; i < voronoiDiagram->n; i++) {
+    for (int j = 0; j < voronoiDiagram->n; j++) {
+      fprintf(file, "%d ", voronoiDiagram->matrix[i][j]);
+    }
+    fprintf(file, "\n");
+  }
+  fclose(file);
+}
+
 int main(int argc, char *argv[]) {
   threadsNumber = atoi(argv[4]);
-  /* srand(time(NULL)); */
+  srand(time(NULL));
   // get length int from argv[2]
   int length2 = atoi(argv[2]);
   // get number of seeds int from argv[3]
@@ -527,14 +542,21 @@ int main(int argc, char *argv[]) {
     /* double time_spent = (double)(end - begin) / CLOCKS_PER_SEC; */
     /* printf("Threaded: %f\n", time_spent); */
 
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
-    getDiagramHelperThreaded((void *)args);
-    gettimeofday(&end, NULL);
-    double time_spent = (double)(end.tv_sec - start.tv_sec) +
-                        (double)(end.tv_usec - start.tv_usec) / 1000000;
-    printf("Threaded: %f\n", time_spent);
-    printfVoronoiMatrix(voronoiDiagram);
+    if (strcmp(argv[5], "print") == 0) {
+      getDiagramHelperThreaded((void *)args);
+      writeVoronoiMatrix(voronoiDiagram);
+    } else {
+      struct timeval start, end;
+      gettimeofday(&start, NULL);
+      getDiagramHelperThreaded((void *)args);
+      gettimeofday(&end, NULL);
+      double time_spent = (double)(end.tv_sec - start.tv_sec) +
+                          (double)(end.tv_usec - start.tv_usec) / 1000000;
+      printf("Threaded: %f\n", time_spent);
+      writeVoronoiMatrix(voronoiDiagram);
+      printf("Written to: output.txt");
+      printfVoronoiMatrix(voronoiDiagram);
+    }
   } else {
     /* clock_t begin2 = clock(); */
     /* getDiagramHelperNonThreaded(corners, voronoiDiagram); */
@@ -542,14 +564,21 @@ int main(int argc, char *argv[]) {
     /* double time_spent2 = (double)(end2 - begin2) / CLOCKS_PER_SEC; */
     /* printf("Non threaded: %f\n", time_spent2); */
 
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
-    getDiagramHelperNonThreaded(corners, voronoiDiagram);
-    gettimeofday(&end, NULL);
-    double time_spent = (double)(end.tv_sec - start.tv_sec) +
-                        (double)(end.tv_usec - start.tv_usec) / 1000000;
-    printf("Non threaded: %f\n", time_spent);
-    printfVoronoiMatrix(voronoiDiagram);
+    if (strcmp(argv[5], "print") == 0) {
+      getDiagramHelperNonThreaded(corners, voronoiDiagram);
+      writeVoronoiMatrix(voronoiDiagram);
+    } else {
+      struct timeval start, end;
+      gettimeofday(&start, NULL);
+      getDiagramHelperNonThreaded(corners, voronoiDiagram);
+      gettimeofday(&end, NULL);
+      double time_spent = (double)(end.tv_sec - start.tv_sec) +
+                          (double)(end.tv_usec - start.tv_usec) / 1000000;
+      printf("Non threaded: %f\n", time_spent);
+      writeVoronoiMatrix(voronoiDiagram);
+      printf("Written to: output.txt");
+      printfVoronoiMatrix(voronoiDiagram);
+    }
   }
 
   for (int i = 0; i < voronoiDiagram->seedsCount; i++) {
