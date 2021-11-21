@@ -9,136 +9,12 @@ import math
 
 scale = 2**26
 
-amenities = [
-    "grit_bin",
-    "parking_entrance",
-    "pub",
-    "cafe",
-    "bar",
-    "restaurant",
-    "biergarten",
-    "fast_food",
-    "food_court",
-    "ice_cream",
-    "college",
-    "driving_school",
-    "kindergarten",
-    "language_school",
-    "library",
-    "toy_library",
-    "music_school",
-    "school",
-    "university",
-    "kick-scooter_rental",
-    "bicycle_parking",
-    "bicycle_repair_station",
-    "bicycle_rental",
-    "boat_rental",
-    "boat_sharing",
-    "bus_station",
-    "car_rental",
-    "car_sharing",
-    "car_wash",
-    "vehicle_inspection",
-    "charging_station",
-    "ferry_terminal",
-    "fuel",
-    "motorcycle_parking",
-    "parking",
-    "parking_space",
-    "taxi",
-    "atm",
-    "bank",
-    "bureau_de_change",
-    "baby_hatch",
-    "clinic",
-    "dentist",
-    "doctors",
-    "hospital",
-    "nursing_home",
-    "social_facility",
-    "pharmacy",
-    "veterinary",
-    "arts_centre",
-    "brothel",
-    "casino",
-    "cinema",
-    "community_centre",
-    "conference_centre",
-    "events_venue",
-    "fountain",
-    "gambling",
-    "love_hotel",
-    "nightclub",
-    "amenity=stripclub",
-    "planetarium",
-    "public_bookcase",
-    "social_centre",
-    "stripclub",
-    "studio",
-    "swingerclub",
-    "theatre",
-    "courthouse",
-    "embassy",
-    "fire_station",
-    "police",
-    "post_box",
-    "post_depot",
-    "post_office",
-    "prison",
-    "ranger_station",
-    "townhall",
-    "bbq",
-    "bench",
-    "dog_toilet",
-    "drinking_water",
-    "give_box",
-    "freeshop",
-    "shelter",
-    "shower",
-    "telephone",
-    "toilets",
-    "water_point",
-    "watering_place",
-    "sanitary_dump_station",
-    "recycling",
-    "waste_basket",
-    "waste_disposal",
-    "waste_transfer_station",
-    "animal_boarding",
-    "animal_breeding",
-    "animal_shelter",
-    "baking_oven",
-    "childcare",
-    "clock",
-    "crematorium",
-    "dive_centre",
-    "funeral_hall",
-    "grave_yard",
-    "gym",
-    "hunting_stand",
-    "internet_cafe",
-    "kitchen",
-    "kneipp_water_cure",
-    "lounger",
-    "marketplace",
-    "monastery",
-    "photo_booth",
-    "place_of_mourning",
-    "place_of_worship",
-    "the article",
-    "public_bath",
-    "public_building",
-    "refugee_site",
-    "vending_machine",
-    "yes"
-]
 
 # overpass query to get all hospitals around 10km of radius around the
 # given coordinates
 
 
-def get_hospitals(meters, amenity, latitude, longitude):
+def getHospitalsQuery(meters, amenity, latitude, longitude):
     query = '''[out:json][timeout:25];
     (
     nwr["amenity"="{}"](around:{},{},{});
@@ -151,7 +27,7 @@ def get_hospitals(meters, amenity, latitude, longitude):
 # get my coordinates
 
 
-def get_my_coordinates():
+def getMyCoordinates():
     url = 'https://ipinfo.io/json'
     response = requests.get(url)
     data = response.json()
@@ -160,16 +36,16 @@ def get_my_coordinates():
     return lat, lon
 
 
-overpass_url = 'http://overpass-api.de/api/interpreter'
-coordinates = get_my_coordinates()
+OVERPASS_URL = 'http://overpass-api.de/api/interpreter'
+coordinates = getMyCoordinates()
 
-overpass_query = get_hospitals(
-    10000,
+overpassQuery = getHospitalsQuery(
+    1000,
     'school',
     # amenities[5],
     coordinates[0],
     coordinates[1])
-response = requests.get(overpass_url, params={'data': overpass_query})
+response = requests.get(OVERPASS_URL, params={'data': overpassQuery})
 data = response.json()
 
 
@@ -184,40 +60,62 @@ def mercator(lat, lon, width, height):
 
 
 coords = []
+
 for element in data['elements']:
     if element['type'] == 'node':
-        lon = element['lon']
         lat = element['lat']
+        lon = element['lon']
         x, y = mercator(lat, lon, scale, scale)
         coords.append((x, y))
     elif 'center' in element:
-        lon = element['center']['lon']
         lat = element['center']['lat']
-        x, y = mercator(lat, lon, scale , scale)
+        lon = element['center']['lon']
+        x, y = mercator(lat, lon, scale, scale)
         coords.append((x, y))
 
-X = np.array(coords)
 
-X = X - X.min(axis=0)
+xOrigin, yOrigin = mercator(
+    float(coordinates[0]),
+    float(coordinates[1]),
+    scale, scale)
+coords.append((xOrigin, yOrigin))
 
-plt.plot(X[:, 0], X[:, 1], 'o')
+
+matrix = np.array(coords)
+
+matrix = matrix - matrix.min(axis=0)
+
+# delete last element from X
+originTransformed = matrix[-1]
+matrix = matrix[:-1]
+
+maxX = matrix[:, 0].max()
+maxY = matrix[:, 1].max()
+
+
+# get max x value from matrix
+# get max y value from matrix
+
+plt.plot(matrix[:, 0], matrix[:, 1], 'o')
 plt.title('Restaurants near your location')
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.axis('equal')
 plt.show()
 
+maxXY = max(maxX, maxY)
 
-"""
+# find n given that 2^n is greater or equal than maxXY
+n = int(math.log(maxXY, 2)) + 1
+print(matrix)
+print()
+print(originTransformed)
 
-# shift elements to match origin
-X = X - X.min(axis=0)
+def writeNumpyMatrixToFile(filename, matrix):
+    with open(filename, 'w') as f:
+        for row in matrix:
+            for element in row:
+                f.write(str(element) + ' ')
+            f.write('\n')
 
-# get max x and y
-x_max = X[:, 0].max()
-y_max = X[:, 1].max()
-print(x_max, y_max)
-
-# scale matrix
-
-"""
+writeNumpyMatrixToFile('./cMultithread/input.txt',matrix)

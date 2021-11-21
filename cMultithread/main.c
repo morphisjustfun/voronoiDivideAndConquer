@@ -465,6 +465,26 @@ struct Seed **getSeeds(int matrixSize, int numberSeeds) {
   return seeds;
 };
 
+struct Seed **getSeedsFromFile(int numberSeeds) {
+  // complete according to above python reference
+  struct Seed **seeds =
+      (struct Seed **)malloc(numberSeeds * sizeof(struct Seed *));
+  for (int i = 0; i < numberSeeds; i++) {
+    seeds[i] = (struct Seed *)malloc(sizeof(struct Seed));
+  }
+  FILE *fp = fopen("input.txt", "r");
+  if (fp == NULL) {
+    printf("Error opening file!\n");
+    exit(1);
+  }
+  for (int i = 0; i < numberSeeds; i++) {
+    fscanf(fp, "%d %d", &seeds[i]->x, &seeds[i]->y);
+    seeds[i]->id = i;
+  }
+  fclose(fp);
+  return seeds;
+};
+
 void printfVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
   char str[] = "$@B\%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/"
                "\\|()1{}[]?-_+~<>i!lI;:,\"^`'.";
@@ -504,7 +524,8 @@ int main(int argc, char *argv[]) {
 
   int n = pow(2, length2);
 
-  struct Seed **seeds = getSeeds(n, numberofSeeds);
+  /* struct Seed **seeds = getSeeds(n, numberofSeeds); */
+  struct Seed **seeds = getSeedsFromFile(numberofSeeds);
 
   struct VoronoiDiagram *voronoiDiagram =
       constructorVoronoiDiagram(n, seeds, numberofSeeds);
