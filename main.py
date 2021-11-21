@@ -6,15 +6,24 @@ import numpy as np
 # seeds: number of random seeds
 # threads: number of threads
 # threaded: 1 for threaded, 0 for not threaded
-def getMatrixFromCFunction(n, seeds, threads, threaded = 1, filename = "cMultithread/output.txt"):
+
+
+def getMatrixFromCFunction(
+        n,
+        seeds,
+        threads,
+        threaded=1,
+        filename="cMultithread/output.txt"):
     commandLine = f"cd cMultithread && make && ./main.x {threaded} {n} {seeds} {threads} print && cd .."
     os.system(commandLine)
     matrix = np.loadtxt(filename)
     return matrix
 
+
 if __name__ == '__main__':
     # set location of script to location of this file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    matrix = getMatrixFromCFunction(3, 9, 3)
+    matrix = getMatrixFromCFunction(18, 30, 3)
+
     print(matrix)
