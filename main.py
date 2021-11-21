@@ -4,6 +4,8 @@ import requests
 import matplotlib.pyplot as plt
 import math
 from constants import AMENITIES, OVERPASS_URL
+import matplotlib
+import random
 
 # filename: written file by c function
 # n: 2^n = length of matrix
@@ -20,7 +22,6 @@ def getMatrixFromCFunction(
     os.system(commandLine)
     matrix = np.loadtxt(filename)
     # delete filename
-    os.system(f"rm {filename}")
     return matrix
 
 def writeNumpyMatrixToFile(filename, matrix):
@@ -110,13 +111,32 @@ if __name__ == '__main__':
 
     meters = 1000
     scale = 2**26
+    # amenity = AMENITIES[17]
     amenity = AMENITIES[17]
     coordinates = getMyCoordinates()
     dataOverpass = getHospitalsQuery(meters, amenity, coordinates[0], coordinates[1])
-    matrix, n, originTransformed, pointsData = getMatrixFormatted(dataOverpass, coordinates, scale)
+    matrixSeeds, n, originTransformed, pointsData = getMatrixFormatted(dataOverpass, coordinates, scale)
 
-    writeNumpyMatrixToFile('./cMultithread/input.txt',matrix)
+    writeNumpyMatrixToFile('./cMultithread/input.txt',matrixSeeds)
+
     matrix = getMatrixFromCFunction(n, len(pointsData), 3)
-    idSelected = matrix[int(originTransformed[0])][int(originTransformed[1])]
+    idSelected = matrix[int(originTransformed[1])][int(originTransformed[0])]
     print(f"Nearest {amenity}")
     print(pointsData[int(idSelected)])
+
+    def getRandomColors(n):
+        colors = []
+        for i in range(n * 30):
+            # colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([random.random(), 1, 1])))
+            if i == 0:
+                colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([0, 0, 1])))
+            else:
+                colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([random.random(), 1, 1])))
+        return colors
+
+    cmap = matplotlib.colors.ListedColormap(getRandomColors(len(pointsData)), name = 'colors', N=None)
+    plt.imshow(matrix, cmap=cmap, interpolation='nearest')
+    plt.scatter(originTransformed[1], originTransformed[0], c='white', s=100, edgecolors=['black'])
+    for i in range(len(pointsData)):
+        plt.scatter(matrixSeeds[i][1], matrixSeeds[i][0], c='white', s=50, edgecolors=['black'])
+    plt.show()

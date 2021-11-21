@@ -61,6 +61,7 @@ def mercator(lat, lon, width, height):
 
 coords = []
 
+print(data['elements'])
 for element in data['elements']:
     if element['type'] == 'node':
         lat = element['lat']
@@ -118,4 +119,4 @@ def writeNumpyMatrixToFile(filename, matrix):
                 f.write(str(element) + ' ')
             f.write('\n')
 
-writeNumpyMatrixToFile('./cMultithread/input.txt',matrix)
+# writeNumpyMatrixToFile('./cMultithread/input.txt',matrix)
