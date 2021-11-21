@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 # filename: written file by c function
 # n: 2^n = length of matrix
@@ -8,18 +9,10 @@ import os
 def getMatrixFromCFunction(n, seeds, threads, threaded = 1, filename = "cMultithread/output.txt"):
     commandLine = f"cd cMultithread && make && ./main.x {threaded} {n} {seeds} {threads} print && cd .."
     os.system(commandLine)
-    matrix = []
-
-    with open(filename, "r") as f:
-        for line in f:
-            matrix.append(list(map(int, line.split())))
+    matrix = np.loadtxt(filename)
     return matrix
-
-def prettyPrintMatrix(matrix):
-    for row in matrix:
-        print(row)
 
 if __name__ == '__main__':
     # print(getMatrixFromCFunction(6, 9, 3))
-    matrix = getMatrixFromCFunction(5, 9, 3)
-    prettyPrintMatrix(matrix)
+    matrix = getMatrixFromCFunction(3, 9, 3)
+    print(matrix)
