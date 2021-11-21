@@ -545,6 +545,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[5], "print") == 0) {
       getDiagramHelperThreaded((void *)args);
       writeVoronoiMatrix(voronoiDiagram);
+      printf("Written to: output.txt\n");
     } else {
       struct timeval start, end;
       gettimeofday(&start, NULL);
@@ -554,7 +555,7 @@ int main(int argc, char *argv[]) {
                           (double)(end.tv_usec - start.tv_usec) / 1000000;
       printf("Threaded: %f\n", time_spent);
       writeVoronoiMatrix(voronoiDiagram);
-      printf("Written to: output.txt");
+      printf("Written to: output.txt\n");
       printfVoronoiMatrix(voronoiDiagram);
     }
   } else {
@@ -567,6 +568,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[5], "print") == 0) {
       getDiagramHelperNonThreaded(corners, voronoiDiagram);
       writeVoronoiMatrix(voronoiDiagram);
+      printf("Written to: output.txt\n");
     } else {
       struct timeval start, end;
       gettimeofday(&start, NULL);
@@ -576,7 +578,7 @@ int main(int argc, char *argv[]) {
                           (double)(end.tv_usec - start.tv_usec) / 1000000;
       printf("Non threaded: %f\n", time_spent);
       writeVoronoiMatrix(voronoiDiagram);
-      printf("Written to: output.txt");
+      printf("Written to: output.txt\n");
       printfVoronoiMatrix(voronoiDiagram);
     }
   }
