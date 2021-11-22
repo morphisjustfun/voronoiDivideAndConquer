@@ -172,7 +172,7 @@ def plotHelper(matrix, pointsData, matrixSeeds, originTransformed):
         'convert out.png -fuzz 20% -fill none -draw "matte 0,0 floodfill" outTransparent.png')
 
 
-def selectedSeed(matrix, originTransformed):
+def selectedSeed(matrix, originTransformed, pointsData):
     idSelected = matrix[int(originTransformed[0])][int(originTransformed[1])]
     print(pointsData[int(idSelected)])
 
@@ -189,6 +189,7 @@ if __name__ == '__main__':
     coordinates = getMyCoordinates()
     dataOverpass = getHospitalsQuery(
         meters, amenity, coordinates[0], coordinates[1])
+
     matrixSeeds, n, originTransformed, pointsData = getMatrixFormatted(
         dataOverpass, coordinates, scale)
 
@@ -198,6 +199,6 @@ if __name__ == '__main__':
 
     maxRadius = transformMatrix(matrix, matrixSeeds, originTransformed)
 
-    print(selectedSeed(matrix, originTransformed))
+    print(selectedSeed(matrix, originTransformed, pointsData))
 
     plotHelper(matrix, pointsData, matrixSeeds, originTransformed)
