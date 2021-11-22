@@ -12,6 +12,8 @@ import random
 # seeds: number of random seeds
 # threads: number of threads
 # threaded: 1 for threaded, 0 for not threaded
+
+
 def getMatrixFromCFunction(
         n,
         seeds,
@@ -24,12 +26,14 @@ def getMatrixFromCFunction(
     # delete filename
     return matrix
 
+
 def writeNumpyMatrixToFile(filename, matrix):
     with open(filename, 'w') as f:
         for row in matrix:
             for element in row:
                 f.write(str(element) + ' ')
             f.write('\n')
+
 
 def getHospitalsQuery(meters, amenity, latitude, longitude):
     query = '''[out:json][timeout:25];
@@ -52,6 +56,7 @@ def getMyCoordinates():
     lon = data['loc'].split(',')[1]
     return lat, lon
 
+
 def mercator(lat, lon, width, height):
     x = (lon + 180) * (width / 360)
     latRad = lat * math.pi / 180
@@ -59,6 +64,7 @@ def mercator(lat, lon, width, height):
     mercN = math.log(math.tan((math.pi / 4) + (latRad / 2)))
     y = (height / 2) - (width * mercN / (2 * math.pi))
     return int(x), int(y)
+
 
 def getMatrixFormatted(data, coordinates, scale):
     coords = []
@@ -103,7 +109,73 @@ def getMatrixFormatted(data, coordinates, scale):
     n = int(math.log(maxXY, 2)) + 1
 
     return matrix, n, originTransformed, pointsData
-    
+
+
+def transformMatrix(matrix, matrixSeeds, originTransformed):
+    maxRadius = 0
+    for i in range(len(matrixSeeds)):
+        radius = math.sqrt(
+            (matrixSeeds[i][0] - originTransformed[0])**2 +
+            (matrixSeeds[i][1] - originTransformed[1])**2)
+        if radius > maxRadius:
+            maxRadius = radius
+
+    # set as -1 all elements inside matrix that are out of maxRadius
+    for i in range(len(matrix)):
+        for j in range(len(matrix[i])):
+            if math.sqrt(
+                (i - originTransformed[0])**2 +
+                    (j - originTransformed[1])**2) > maxRadius * 23 / 20:
+                matrix[i][j] = -1
+
+    return maxRadius
+
+
+def getRandomColors(n):
+    colors = []
+    for i in range(n * 30):
+        # colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([random.random(), 1, 1])))
+        if i == 0:
+            colors.append(matplotlib.colors.to_hex( # type: ignore
+                matplotlib.colors.hsv_to_rgb([0, 0, 1]))) # type: ignore
+        else:
+            colors.append(matplotlib.colors.to_hex( # type: ignore
+                matplotlib.colors.hsv_to_rgb([random.random(), 1, 1]))) # type: ignore
+    return colors
+
+
+def plotHelper(matrix, pointsData, matrixSeeds, originTransformed):
+    cmap = matplotlib.colors.ListedColormap( # type: ignore
+        getRandomColors(len(pointsData)), name='colors', N=None)
+    plt.imshow(matrix, cmap=cmap, interpolation='nearest', origin="lower")
+    plt.scatter(
+        originTransformed[0],
+        originTransformed[1],
+        c='white',
+        s=100,
+        edgecolors=['black'])
+    for i in range(len(pointsData)):
+        plt.scatter(
+            matrixSeeds[i][0],
+            matrixSeeds[i][1],
+            c='white',
+            s=10,
+            edgecolors=['black'])
+    plt.axis('off')
+    plt.savefig(
+        'out.png',
+        bbox_inches='tight',
+        transparent=True,
+        pad_inches=0,
+        dpi=600)
+    os.system(
+        'convert out.png -fuzz 20% -fill none -draw "matte 0,0 floodfill" outTransparent.png')
+
+
+def selectedSeed(matrix, originTransformed):
+    idSelected = matrix[int(originTransformed[0])][int(originTransformed[1])]
+    print(pointsData[int(idSelected)])
+
 
 if __name__ == '__main__':
     # set location of script to location of this file
@@ -111,32 +183,21 @@ if __name__ == '__main__':
 
     meters = 1000
     scale = 2**26
+    amenity = AMENITIES[12]
     # amenity = AMENITIES[5]
-    amenity = AMENITIES[17]
+    # amenity = AMENITIES[17]
     coordinates = getMyCoordinates()
-    dataOverpass = getHospitalsQuery(meters, amenity, coordinates[0], coordinates[1])
-    matrixSeeds, n, originTransformed, pointsData = getMatrixFormatted(dataOverpass, coordinates, scale)
+    dataOverpass = getHospitalsQuery(
+        meters, amenity, coordinates[0], coordinates[1])
+    matrixSeeds, n, originTransformed, pointsData = getMatrixFormatted(
+        dataOverpass, coordinates, scale)
 
-    writeNumpyMatrixToFile('./cMultithread/input.txt',matrixSeeds)
+    writeNumpyMatrixToFile('./cMultithread/input.txt', matrixSeeds)
 
     matrix = getMatrixFromCFunction(n, len(pointsData), 3)
-    idSelected = matrix[int(originTransformed[0])][int(originTransformed[1])]
-    print(f"Nearest {amenity}")
-    print(pointsData[int(idSelected)])
 
-    def getRandomColors(n):
-        colors = []
-        for i in range(n * 30):
-            # colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([random.random(), 1, 1])))
-            if i == 0:
-                colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([0, 0, 1])))
-            else:
-                colors.append(matplotlib.colors.to_hex(matplotlib.colors.hsv_to_rgb([random.random(), 1, 1])))
-        return colors
+    maxRadius = transformMatrix(matrix, matrixSeeds, originTransformed)
 
-    cmap = matplotlib.colors.ListedColormap(getRandomColors(len(pointsData)), name = 'colors', N=None)
-    plt.imshow(matrix, cmap=cmap, interpolation='nearest', origin="lower")
-    plt.scatter(originTransformed[0], originTransformed[1], c='white', s=100, edgecolors=['black'])
-    for i in range(len(pointsData)):
-        plt.scatter(matrixSeeds[i][0], matrixSeeds[i][1], c='white', s=30, edgecolors=['black'])
-    plt.show()
+    print(selectedSeed(matrix, originTransformed))
+
+    plotHelper(matrix, pointsData, matrixSeeds, originTransformed)
