@@ -37,7 +37,7 @@ def getVoronoi():
         matrix = getMatrixFromCFunction(
             n, len(pointsData), 3, filename="../cMultithread/output.txt")
 
-        maxRadius = transformMatrix(matrix, matrixSeeds, originTransformed)
+        # maxRadius = transformMatrix(matrix, matrixSeeds, originTransformed)
 
         seedResult = selectedSeed(matrix, originTransformed, pointsData)
 
@@ -46,20 +46,20 @@ def getVoronoi():
         pil_img = Image.open('out.png', mode='r')
         byte_arr = io.BytesIO()
         pil_img.save(byte_arr, format='PNG')
-        encoded_img = encodebytes(byte_arr.getvalue()).decode('ascii')
+        encoded_img = encodebytes(byte_arr.getvalue()).decode('ascii').replace('\n', '')
 
 
-        pil_img2 = Image.open('outTransparent.png', mode='r')
-        byte_arr2 = io.BytesIO()
-        pil_img2.save(byte_arr, format='PNG')
-        encoded_img2 = encodebytes(byte_arr.getvalue()).decode('ascii')
+        # pil_img2 = Image.open('outTransparent.png', mode='r')
+        # byte_arr2 = io.BytesIO()
+        # pil_img2.save(byte_arr2, format='PNG')
+        # encoded_img2 = encodebytes(byte_arr.getvalue()).decode('ascii').replace('\n', '')
 
         # return json with encoded_img and encoded_img2 and seedResult
         return jsonify(
             {
                 "seedResult": seedResult,
                 "encoded_img": encoded_img,
-                "encoded_img2": encoded_img2
+                "encoded_img2": ""
             }
         )
     return Response(status=400)

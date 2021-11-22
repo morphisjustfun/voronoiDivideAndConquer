@@ -2,3 +2,6 @@ env/
 __pycache__/
 input.txt
 output.txt
+main.x
+out.png
+outTransparent.png

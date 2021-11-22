@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:frontend/services/voronoi_service.dart';
 import 'package:location/location.dart';
+import 'result.dart';
 
 class Index extends HookWidget {
   final String title;
@@ -12,8 +14,14 @@ class Index extends HookWidget {
     var currentLocation = useState<dynamic>(null);
     var metersAround = useState(1000);
     var amenitySelected = useState('school');
+    var amenitiesList = useState(['school']);
 
     useEffect(() {
+      void getAmenities() async {
+        var amenities = await VoronoiService.getAmenities();
+        amenitiesList.value = amenities;
+      }
+
       void getLocation() async {
         var location = Location();
         bool _serviceEnabled;
@@ -42,6 +50,7 @@ class Index extends HookWidget {
       }
 
       getLocation();
+      getAmenities();
     }, []);
 
     return Scaffold(
@@ -63,7 +72,8 @@ class Index extends HookWidget {
                   locationPermission: locationPermission,
                   currentLocation: currentLocation,
                   amenitySelected: amenitySelected,
-                  metersAround: metersAround),
+                  metersAround: metersAround,
+                  amenitiesList: amenitiesList),
             ]),
       ),
     );
@@ -114,12 +124,14 @@ class SecondColumn extends StatelessWidget {
   final ValueNotifier<dynamic> currentLocation;
   final ValueNotifier<String> amenitySelected;
   final ValueNotifier<int> metersAround;
+  final ValueNotifier<List<String>> amenitiesList;
   const SecondColumn({
     Key? key,
     required this.locationPermission,
     required this.currentLocation,
     required this.amenitySelected,
     required this.metersAround,
+    required this.amenitiesList,
   }) : super(key: key);
 
   @override
@@ -130,8 +142,7 @@ class SecondColumn extends StatelessWidget {
         Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
           DropdownButton<String>(
               value: amenitySelected.value,
-              items:
-                  ['school', 'restaurant', 'veterineara'].map((String value) {
+              items: amenitiesList.value.map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
@@ -162,36 +173,18 @@ class SecondColumn extends StatelessWidget {
         ElevatedButton(
             child: Text('Get results'),
             onPressed: () {
-            // alert
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('Results'),
-                    content: Text('Results'),
-                    actions: <Widget>[
-                      FlatButton(
-                        child: Text('Ok'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      )
-                    ],
-                  );
-                });
-              
-              /* Navigator.push( */
-              /*    context, */
-              /*    MaterialPageRoute( */
-              /*       builder: (context) => Results( */
-              /*       currentLocation: currentLocation.value, */
-              /*       amenitySelected: amenitySelected.value, */
-              /*       metersAround: metersAround.value, */
-              /*       ), */
-              /*    ), */
-              /* ); */
-            }
-            )
+              // alert
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Result(
+                    locationData: currentLocation.value,
+                    amenity: amenitySelected.value,
+                    metersAround: metersAround.value,
+                  ),
+                ),
+              );
+            })
       ] else if (locationPermission.value) ...[
         const CircularProgressIndicator()
       ]

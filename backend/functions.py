@@ -168,8 +168,8 @@ def plotHelper(matrix, pointsData, matrixSeeds, originTransformed):
         transparent=True,
         pad_inches=0,
         dpi=600)
-    os.system(
-        'convert out.png -fuzz 20% -fill none -draw "matte 0,0 floodfill" outTransparent.png')
+    # os.system(
+    #     'convert out.png -fuzz 20% -fill none -draw "matte 0,0 floodfill" outTransparent.png')
 
 
 def selectedSeed(matrix, originTransformed, pointsData):
