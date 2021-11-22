@@ -54,7 +54,8 @@ struct VoronoiDiagram *constructorVoronoiDiagram(int n, struct Seed **seeds,
   }
 
   for (int i = 0; i < seedsCount; i++) {
-    voronoiDiagram->matrix[seeds[i]->x][seeds[i]->y] = seeds[i]->id;
+    /* voronoiDiagram->matrix[seeds[i]->x][seeds[i]->y] = seeds[i]->id; */
+    voronoiDiagram->matrix[seeds[i]->y][seeds[i]->x] = seeds[i]->id;
   }
 
   return voronoiDiagram;
@@ -64,19 +65,19 @@ double distance(struct Seed *seed, int x, int y) {
   return sqrt(pow(seed->x - x, 2) + pow(seed->y - y, 2));
 }
 
-void clearVoronoiDiagram(struct VoronoiDiagram *voronoiDiagram) {
-  for (int i = 0; i < voronoiDiagram->n; i++) {
-    for (int j = 0; j < voronoiDiagram->n; j++) {
-      voronoiDiagram->matrix[i][j] = -1;
-    }
-  }
+/* void clearVoronoiDiagram(struct VoronoiDiagram *voronoiDiagram) { */
+/*   for (int i = 0; i < voronoiDiagram->n; i++) { */
+/*     for (int j = 0; j < voronoiDiagram->n; j++) { */
+/*       voronoiDiagram->matrix[i][j] = -1; */
+/*     } */
+/*   } */
 
-  for (int i = 0; i < voronoiDiagram->seedsCount; i++) {
-    voronoiDiagram
-        ->matrix[voronoiDiagram->seeds[i]->x][voronoiDiagram->seeds[i]->y] =
-        voronoiDiagram->seeds[i]->id;
-  }
-}
+/*   for (int i = 0; i < voronoiDiagram->seedsCount; i++) { */
+/*     voronoiDiagram */
+/*         ->matrix[voronoiDiagram->seeds[i]->x][voronoiDiagram->seeds[i]->y] = */
+/*         voronoiDiagram->seeds[i]->id; */
+/*   } */
+/* } */
 
 void getDiagramHelperNonThreaded(int **corners,
                                  struct VoronoiDiagram *voronoiDiagram) {
@@ -110,7 +111,8 @@ void getDiagramHelperNonThreaded(int **corners,
     int *thirdCorner = corners[2];
     for (int height = firstCorner[0]; height < secondCorner[0] + 1; height++) {
       for (int width = firstCorner[1]; width < thirdCorner[1] + 1; width++) {
-        voronoiDiagram->matrix[height][width] = closestSeeds[0]->id;
+        /* voronoiDiagram->matrix[height][width] = closestSeeds[0]->id; */
+        voronoiDiagram->matrix[width][height] = closestSeeds[0]->id;
       }
     }
   } else {
@@ -258,7 +260,8 @@ void *getDiagramHelperThreaded(void *context) {
     int *thirdCorner = corners[2];
     for (int height = firstCorner[0]; height < secondCorner[0] + 1; height++) {
       for (int width = firstCorner[1]; width < thirdCorner[1] + 1; width++) {
-        voronoiDiagram->matrix[height][width] = closestSeeds[0]->id;
+        /* voronoiDiagram->matrix[height][width] = closestSeeds[0]->id; */
+        voronoiDiagram->matrix[width][height] = closestSeeds[0]->id;
       }
     }
   } else {

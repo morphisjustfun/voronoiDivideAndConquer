@@ -111,8 +111,8 @@ if __name__ == '__main__':
 
     meters = 1000
     scale = 2**26
-    amenity = AMENITIES[5]
-    # amenity = AMENITIES[17]
+    # amenity = AMENITIES[5]
+    amenity = AMENITIES[17]
     coordinates = getMyCoordinates()
     dataOverpass = getHospitalsQuery(meters, amenity, coordinates[0], coordinates[1])
     matrixSeeds, n, originTransformed, pointsData = getMatrixFormatted(dataOverpass, coordinates, scale)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     writeNumpyMatrixToFile('./cMultithread/input.txt',matrixSeeds)
 
     matrix = getMatrixFromCFunction(n, len(pointsData), 3)
-    idSelected = matrix[int(originTransformed[1])][int(originTransformed[0])]
+    idSelected = matrix[int(originTransformed[0])][int(originTransformed[1])]
     print(f"Nearest {amenity}")
     print(pointsData[int(idSelected)])
 
@@ -135,8 +135,8 @@ if __name__ == '__main__':
         return colors
 
     cmap = matplotlib.colors.ListedColormap(getRandomColors(len(pointsData)), name = 'colors', N=None)
-    plt.imshow(matrix, cmap=cmap, interpolation='nearest')
-    plt.scatter(originTransformed[1], originTransformed[0], c='white', s=100, edgecolors=['black'])
+    plt.imshow(matrix, cmap=cmap, interpolation='nearest', origin="lower")
+    plt.scatter(originTransformed[0], originTransformed[1], c='white', s=100, edgecolors=['black'])
     for i in range(len(pointsData)):
-        plt.scatter(matrixSeeds[i][1], matrixSeeds[i][0], c='white', s=50, edgecolors=['black'])
+        plt.scatter(matrixSeeds[i][0], matrixSeeds[i][1], c='white', s=30, edgecolors=['black'])
     plt.show()
