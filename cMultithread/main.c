@@ -10,6 +10,7 @@
 static int threadsNumber = 1;
 
 struct Seed {
+  double id;
   int x;
   int y;
 };
@@ -18,7 +19,7 @@ struct VoronoiDiagram {
   int n;
   int seedsCount;
   struct Seed **seeds;
-  int **matrix;
+  double** matrix;
   int counterThread;
 };
 
@@ -42,18 +43,18 @@ struct VoronoiDiagram *constructorVoronoiDiagram(int n, struct Seed **seeds,
     voronoiDiagram->seeds[i] = seeds[i];
   }
 
-  voronoiDiagram->matrix = (int **)malloc(n * sizeof(int *));
+  voronoiDiagram->matrix = (double **)malloc(n * sizeof(double *));
 
   for (int i = 0; i < n; i++) {
-    voronoiDiagram->matrix[i] = (int *)malloc(n * sizeof(int));
+    voronoiDiagram->matrix[i] = (double *)malloc(n * sizeof(double));
     /* memset(voronoiDiagram->matrix[i], 0, n * sizeof(int)); */
     for (int j = 0; j < n; j++) {
-      voronoiDiagram->matrix[i][j] = -1;
+      voronoiDiagram->matrix[i][j] = -1.0;
     }
   }
 
   for (int i = 0; i < seedsCount; i++) {
-    voronoiDiagram->matrix[seeds[i]->x][seeds[i]->y] = i;
+    voronoiDiagram->matrix[seeds[i]->x][seeds[i]->y] = seeds[i]->id;
   }
 
   return voronoiDiagram;
@@ -63,19 +64,17 @@ double distance(struct Seed *seed, int x, int y) {
   return sqrt(pow(seed->x - x, 2) + pow(seed->y - y, 2));
 }
 
-/* void clearVoronoiDiagram(struct VoronoiDiagram *voronoiDiagram) { */
-/*   for (int i = 0; i < voronoiDiagram->n; i++) { */
-/*     for (int j = 0; j < voronoiDiagram->n; j++) { */
-/*       voronoiDiagram->matrix[i][j] = -1; */
-/*     } */
-/*   } */
+void clearVoronoiDiagram(struct VoronoiDiagram *voronoiDiagram) {
+  for (int i = 0; i < voronoiDiagram->n; i++) {
+    for (int j = 0; j < voronoiDiagram->n; j++) {
+      voronoiDiagram->matrix[i][j] = -1;
+    }
+  }
 
-/*   for (int i = 0; i < voronoiDiagram->seedsCount; i++) { */
-/*     voronoiDiagram */
-/*         ->matrix[voronoiDiagram->seeds[i]->x][voronoiDiagram->seeds[i]->y] = */
-/*         voronoiDiagram->seeds[i]->id; */
-/*   } */
-/* } */
+  for (int i = 0; i < voronoiDiagram->seedsCount; i++) {
+    voronoiDiagram->matrix[voronoiDiagram->seeds[i]->x][voronoiDiagram->seeds[i]->y] = voronoiDiagram->seeds[i]->id;
+  }
+}
 
 void getDiagramHelperNonThreaded(int **corners,
                                  struct VoronoiDiagram *voronoiDiagram) {
@@ -84,8 +83,6 @@ void getDiagramHelperNonThreaded(int **corners,
   struct Seed **closestSeeds =
       (struct Seed **)malloc(countCorners * sizeof(struct Seed *));
 
-  int closestSeedsPositions[4];
-
   for (int i = 0; i < countCorners; i++) {
     // get closest seed for each corner
     closestSeeds[i] = voronoiDiagram->seeds[0];
@@ -93,7 +90,6 @@ void getDiagramHelperNonThreaded(int **corners,
       if (distance(voronoiDiagram->seeds[j], corners[i][0], corners[i][1]) <
           distance(closestSeeds[i], corners[i][0], corners[i][1])) {
         closestSeeds[i] = voronoiDiagram->seeds[j];
-        closestSeedsPositions[i] = j;
       }
     }
   }
@@ -112,7 +108,7 @@ void getDiagramHelperNonThreaded(int **corners,
     int *thirdCorner = corners[2];
     for (int height = firstCorner[0]; height < secondCorner[0] + 1; height++) {
       for (int width = firstCorner[1]; width < thirdCorner[1] + 1; width++) {
-        voronoiDiagram->matrix[height][width] = closestSeedsPositions[0];
+        voronoiDiagram->matrix[height][width] = sqrt(pow(closestSeeds[0]->x - width,2) + pow( closestSeeds[0]->y - height, 2));
       }
     }
   } else {
@@ -229,7 +225,6 @@ void *getDiagramHelperThreaded(void *context) {
   struct VoronoiDiagram *voronoiDiagram = args->diagram;
   int threadCounter = args->threadCounter;
   int **corners = args->corners;
-  int closestSeedsPositions[4];
 
   int countCorners = 4;
 
@@ -243,7 +238,6 @@ void *getDiagramHelperThreaded(void *context) {
       if (distance(voronoiDiagram->seeds[j], corners[i][0], corners[i][1]) <
           distance(closestSeeds[i], corners[i][0], corners[i][1])) {
         closestSeeds[i] = voronoiDiagram->seeds[j];
-        closestSeedsPositions[i] = j;
       }
     }
   }
@@ -262,7 +256,8 @@ void *getDiagramHelperThreaded(void *context) {
     int *thirdCorner = corners[2];
     for (int height = firstCorner[0]; height < secondCorner[0] + 1; height++) {
       for (int width = firstCorner[1]; width < thirdCorner[1] + 1; width++) {
-        voronoiDiagram->matrix[height][width] = closestSeedsPositions[0];
+        // voronoiDiagram->matrix[height][width] = sqrt(pow(closestSeeds[0]->x - width,2) + pow( closestSeeds[0]->y - height, 2));
+        voronoiDiagram->matrix[height][width] = distance(closestSeeds[0], height, width);
       }
     }
   } else {
@@ -423,7 +418,22 @@ void *getDiagramHelperThreaded(void *context) {
   return NULL;
 };
 
-struct Seed **getSeeds(int matrixSize, int numberSeeds) {
+/*
+  def getRandomSeeds(n: int, k: int) -> list[Seed]:
+    seeds = []
+    for i in range(k):
+        while True:
+            x = randint(0, n - 1)
+            y = randint(0, n - 1)
+            seed = Seed(i, x, y)
+            if seed not in seeds:
+                seeds.append(seed)
+                break
+    return seeds
+
+  */
+
+struct Seed** getSeeds(int matrixSize, int numberSeeds, double* seedsX, double* seedsY) {
   // complete according to above python reference
   struct Seed **seeds =
       (struct Seed **)malloc(numberSeeds * sizeof(struct Seed *));
@@ -432,22 +442,9 @@ struct Seed **getSeeds(int matrixSize, int numberSeeds) {
   }
 
   for (int i = 0; i < numberSeeds; i++) {
-    while (1) {
-      seeds[i]->x = rand() % matrixSize;
-      seeds[i]->y = rand() % matrixSize;
-
-      // check wether x and y are not already in seeds
-      int isIn = 0;
-      for (int j = 0; j < i; j++) {
-        if (seeds[j]->x == seeds[i]->x && seeds[j]->y == seeds[i]->y) {
-          isIn = 1;
-          break;
-        }
-      }
-      if (!isIn) {
-        break;
-      }
-    }
+    seeds[i]->id = i * 1.0;
+    seeds[i]->x = (int)seedsX[i];
+    seeds[i]->y = (int)seedsY[i];
   }
 
   return seeds;
@@ -458,26 +455,26 @@ void printfVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
                "\\|()1{}[]?-_+~<>i!lI;:,\"^`'.";
   for (int i = 0; i < voronoiDiagram->n; i++) {
     for (int j = 0; j < voronoiDiagram->n; j++) {
-      printf("%c%c", (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] - 1,
-             (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] - 1);
+      /* printf("%c%c", (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] -
+       * 1, */
+      /*        (char)str[voronoiDiagram->matrix[i][j] % sizeof(str)] - 1); */
+      printf("%f ", voronoiDiagram->matrix[i][j],
+             voronoiDiagram->matrix[i][j]);
     }
-    printf("\n");
   }
 }
 
-int main(int argc, char *argv[]) {
-  threadsNumber = atoi(argv[4]);
-  /* srand(time(NULL)); */
+int getMatrix(double** matrix, int length2, int numberofSeeds, double* seedsX,  double* seedsY, int threadsNumber) {
+  srand(time(NULL));
+  char* threaded = "0";
   // get length int from argv[2]
-  int length2 = atoi(argv[2]);
   // get number of seeds int from argv[3]
-  int numberofSeeds = atoi(argv[3]);
   /* int length2 = 10; */
   /* int numberofSeeds = 100; */
 
   int n = pow(2, length2);
 
-  struct Seed **seeds = getSeeds(n, numberofSeeds);
+  struct Seed **seeds = getSeeds(n, numberofSeeds, seedsX, seedsY);
 
   struct VoronoiDiagram *voronoiDiagram =
       constructorVoronoiDiagram(n, seeds, numberofSeeds);
@@ -506,24 +503,21 @@ int main(int argc, char *argv[]) {
   args->corners = corners;
   args->threadCounter = 1;
 
-  /* getDiagramHelperNonThreaded(corners, voronoiDiagram); */
-
-  if (strcmp(argv[1], "1") == 0) {
+ if (strcmp(threaded, "1") == 0) {
     /* clock_t begin = clock(); */
     /* getDiagramHelperThreaded((void *)args); */
     /* clock_t end = clock(); */
     /* double time_spent = (double)(end - begin) / CLOCKS_PER_SEC; */
     /* printf("Threaded: %f\n", time_spent); */
-
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
-    getDiagramHelperThreaded((void *)args);
-    gettimeofday(&end, NULL);
-    double time_spent = (double)(end.tv_sec - start.tv_sec) +
-                        (double)(end.tv_usec - start.tv_usec) / 1000000;
-    printf("Threaded: %f\n", time_spent);
-    printf("Estimated number of threads: %d\n", (int) pow(4, threadsNumber));
-    /* printfVoronoiMatrix(voronoiDiagram); */
+      struct timeval start, end;
+      gettimeofday(&start, NULL);
+      getDiagramHelperThreaded((void *)args);
+      gettimeofday(&end, NULL);
+      double time_spent = (double)(end.tv_sec - start.tv_sec) +
+                          (double)(end.tv_usec - start.tv_usec) / 1000000;
+      printf("Threaded: %f\n", time_spent);
+      // printfVoronoiMatrix(voronoiDiagram);
+    
   } else {
     /* clock_t begin2 = clock(); */
     /* getDiagramHelperNonThreaded(corners, voronoiDiagram); */
@@ -531,34 +525,45 @@ int main(int argc, char *argv[]) {
     /* double time_spent2 = (double)(end2 - begin2) / CLOCKS_PER_SEC; */
     /* printf("Non threaded: %f\n", time_spent2); */
 
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
-    getDiagramHelperNonThreaded(corners, voronoiDiagram);
-    gettimeofday(&end, NULL);
-    double time_spent = (double)(end.tv_sec - start.tv_sec) +
-                        (double)(end.tv_usec - start.tv_usec) / 1000000;
-    printf("Non threaded: %f\n", time_spent);
-    /* printfVoronoiMatrix(voronoiDiagram); */
+      struct timeval start, end;
+      gettimeofday(&start, NULL);
+      getDiagramHelperNonThreaded(corners, voronoiDiagram);
+      gettimeofday(&end, NULL);
+      double time_spent = (double)(end.tv_sec - start.tv_sec) +
+                          (double)(end.tv_usec - start.tv_usec) / 1000000;
+      printf("Non threaded: %f\n", time_spent);
+      // printfVoronoiMatrix(voronoiDiagram);
+    
+  }
+  
+
+  for (int j = 0; j < n; j++) {
+    for (int i = 0; i < n; i++) {
+      //printf("%d ", voronoiDiagram->matrix[j][i]);
+      matrix[j][i] = (double)voronoiDiagram->matrix[j][i];
+      // printf("%d ", matrix[j][i]);
+    }
   }
 
-  for (int i = 0; i < voronoiDiagram->seedsCount; i++) {
-    free(voronoiDiagram->seeds[i]);
-  }
-  free(voronoiDiagram->seeds);
+  // for (int i = 0; i < voronoiDiagram->seedsCount; i++) {
+  //   free(voronoiDiagram->seeds[i]);
+  // }
+  // free(voronoiDiagram->seeds);
 
-  free(voronoiDiagram);
+  // free(voronoiDiagram);
 
-  for (int i = 0; i < 4; i++) {
-    free(corners[i]);
-  }
-  free(corners);
+  // for (int i = 0; i < 4; i++) {
+  //   free(corners[i]);
+  // }
+  // free(corners);
 
-  for (int i = 0; i < numberofSeeds; i++) {
-    free(seeds[i]);
-  }
+  // for (int i = 0; i < numberofSeeds; i++) {
+  //   free(seeds[i]);
+  // }
 
-  free(args);
+  // free(args);
 
-  free(seeds);
+  // free(seeds);
   return 0;
 };
+
