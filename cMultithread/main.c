@@ -108,7 +108,7 @@ void getDiagramHelperNonThreaded(int **corners,
     int *thirdCorner = corners[2];
     for (int height = firstCorner[0]; height < secondCorner[0] + 1; height++) {
       for (int width = firstCorner[1]; width < thirdCorner[1] + 1; width++) {
-        voronoiDiagram->matrix[height][width] = sqrt(pow(closestSeeds[0]->x - width,2) + pow( closestSeeds[0]->y - height, 2));
+        voronoiDiagram->matrix[height][width] = voronoiDiagram->matrix[height][width] = distance(closestSeeds[0], height, width);;
       }
     }
   } else {
@@ -257,7 +257,8 @@ void *getDiagramHelperThreaded(void *context) {
     for (int height = firstCorner[0]; height < secondCorner[0] + 1; height++) {
       for (int width = firstCorner[1]; width < thirdCorner[1] + 1; width++) {
         // voronoiDiagram->matrix[height][width] = sqrt(pow(closestSeeds[0]->x - width,2) + pow( closestSeeds[0]->y - height, 2));
-        voronoiDiagram->matrix[height][width] = distance(closestSeeds[0], height, width);
+        // voronoiDiagram->matrix[height][width] = distance(closestSeeds[0], height, width);
+        voronoiDiagram->matrix[height][width] = closestSeeds[0]->id;
       }
     }
   } else {
@@ -467,10 +468,6 @@ void printfVoronoiMatrix(struct VoronoiDiagram *voronoiDiagram) {
 int getMatrix(double** matrix, int length2, int numberofSeeds, double* seedsX,  double* seedsY, int threadsNumber) {
   srand(time(NULL));
   char* threaded = "0";
-  // get length int from argv[2]
-  // get number of seeds int from argv[3]
-  /* int length2 = 10; */
-  /* int numberofSeeds = 100; */
 
   int n = pow(2, length2);
 
@@ -541,8 +538,9 @@ int getMatrix(double** matrix, int length2, int numberofSeeds, double* seedsX,  
     for (int i = 0; i < n; i++) {
       //printf("%d ", voronoiDiagram->matrix[j][i]);
       matrix[j][i] = (double)voronoiDiagram->matrix[j][i];
-      // printf("%d ", matrix[j][i]);
+      // printf("%f ", matrix[j][i]);
     }
+    // printf("\n");
   }
 
   // for (int i = 0; i < voronoiDiagram->seedsCount; i++) {
