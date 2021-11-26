@@ -29,41 +29,39 @@ def getVoronoi():
         dataOverpass = getHospitalsQuery(
             meters, amenity, coordinates[0], coordinates[1])
 
-        matrixSeeds, n, originTransformed, pointsData = getMatrixFormatted(
-            dataOverpass, coordinates, scale)
+        coordsX, coordsY, pointsData = getMatrixFromData(dataOverpass)
 
-        writeNumpyMatrixToFile('../cMultithread/input.txt', matrixSeeds)
+        MAX_SEEDS = len(pointsData)
 
-        matrix = getMatrixFromCFunction(
-            n, len(pointsData), 3, filename="../cMultithread/output.txt")
+        yOrigin, xOrigin = coordinates
+        yOrigin = float(yOrigin)
+        xOrigin = float(xOrigin)
 
-        # maxRadius = transformMatrix(matrix, matrixSeeds, originTransformed)
+        matrix, n_seeds, xOriginTransformed, yOriginTransformed, MATRIX_L, coords  = getDataFromFunction(coordsX, coordsY, xOrigin, yOrigin, MAX_SEEDS)
 
-        seedResult = selectedSeed(matrix, originTransformed, pointsData)
 
-        plotHelper(matrix, pointsData, matrixSeeds, originTransformed)
+        matrix = np.ctypeslib.as_array(matrix)
+        matrix = matrix.reshape(MATRIX_L, MATRIX_L)
+
+        plotHelper(matrix, pointsData, coords, (xOriginTransformed, yOriginTransformed))
 
         pil_img = Image.open('out.png', mode='r')
         byte_arr = io.BytesIO()
         pil_img.save(byte_arr, format='PNG')
         encoded_img = encodebytes(byte_arr.getvalue()).decode('ascii').replace('\n', '')
 
+        selectedSeedM = pointsData[matrix[xOriginTransformed][yOriginTransformed]]
 
-        # pil_img2 = Image.open('outTransparent.png', mode='r')
-        # byte_arr2 = io.BytesIO()
-        # pil_img2.save(byte_arr2, format='PNG')
-        # encoded_img2 = encodebytes(byte_arr.getvalue()).decode('ascii').replace('\n', '')
-
-        # return json with encoded_img and encoded_img2 and seedResult
         return jsonify(
             {
-                "seedResult": seedResult,
+                "seedResult": selectedSeedM,
                 "encoded_img": encoded_img,
-                "encoded_img2": ""
+                "encoded_img2": encoded_img
             }
         )
     return Response(status=400)
 
 
 if __name__ == '__main__':
+    os.system("gcc -shared -o ../cMultithread/voronoi_2048.so -fPIC ../cMultithread/voronoi_2048.c")
     app.run()

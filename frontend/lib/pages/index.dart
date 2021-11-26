@@ -161,7 +161,7 @@ class SecondColumn extends StatelessWidget {
             Slider(
               value: metersAround.value.toDouble(),
               min: 10,
-              max: 3000,
+              max: 10000,
               divisions: 50,
               onChanged: (double newValue) {
                 metersAround.value = newValue.round();

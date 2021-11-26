@@ -1,8 +1,10 @@
 import numpy as np
+import os
 import requests
 import json
 import matplotlib.pyplot as plt
 import math
+from ctypes import *
 
 # amenity
 # https://wiki.openstreetmap.org/wiki/Key:amenity
@@ -49,74 +51,69 @@ response = requests.get(OVERPASS_URL, params={'data': overpassQuery})
 data = response.json()
 
 
-# get mercator coordinates
-def mercator(lat, lon, width, height):
-    x = (lon + 180) * (width / 360)
-    latRad = lat * math.pi / 180
-
-    mercN = math.log(math.tan((math.pi / 4) + (latRad / 2)))
-    y = (height / 2) - (width * mercN / (2 * math.pi))
-    return int(x), int(y)
-
-
-coords = []
+coordsX = []
+coordsY = []
 
 print(data['elements'])
 for element in data['elements']:
     if element['type'] == 'node':
         lat = element['lat']
         lon = element['lon']
-        x, y = mercator(lat, lon, scale, scale)
-        coords.append((x, y))
+        coordsY.append(lat)
+        coordsX.append(lon)
     elif 'center' in element:
         lat = element['center']['lat']
         lon = element['center']['lon']
-        x, y = mercator(lat, lon, scale, scale)
-        coords.append((x, y))
+        coordsY.append(lat)
+        coordsX.append(lon)
 
 
-xOrigin, yOrigin = mercator(
-    float(coordinates[0]),
-    float(coordinates[1]),
-    scale, scale)
-coords.append((xOrigin, yOrigin))
+yOrigin, xOrigin = coordinates
+yOrigin = float(yOrigin)
+xOrigin = float(xOrigin)
 
+#Global DLL
+CVoronoi  = CDLL(os.path.abspath("./cMultithread/voronoi_2048.so"))
+voronoi = CVoronoi.voronoi_2048
+voronoi.argtypes = [POINTER(c_uint16), POINTER(c_int), POINTER(c_int), c_int, c_int]
 
-matrix = np.array(coords)
+#Global Constants
+MATRIX_L = 2048 #Don't change 2048
+MAX_SEEDS = 2000 #Realistic max (to avoid realloc)
 
-matrix = matrix - matrix.min(axis=0)
+#Global Variables
+#   you shouldn't define this inside a function (to avoid realloc)
+matrix = (c_uint16*(MATRIX_L*MATRIX_L))()
+seeds_x = (c_int*MAX_SEEDS)()
+seeds_y = (c_int*MAX_SEEDS)()
+n_seeds = 0 #This will be setted with set_seeds, dont change it manually
+threaded = 1 # 1 yes, 0 no, you choose
 
-# delete last element from X
-originTransformed = matrix[-1]
-matrix = matrix[:-1]
+def set_seeds(X, Y, xOrigin, yOrigin): # X and Y are arrays
+  xmax = max(X)
+  ymax = max(Y)
+  xmin = min(X)
+  ymin = min(Y)
+  REAL_L = max(xmax - xmin, ymax - ymin)
+  global n_seeds 
+  n_seeds = len(X)
+  for i in range(n_seeds):
+    seeds_x[i] = c_int(int(MATRIX_L*(X[i]-xmin)/REAL_L))
+    seeds_y[i] = c_int(int(MATRIX_L*(Y[i]-ymin)/REAL_L))
+  xOriginTransformed = int(MATRIX_L*(xOrigin-xmin)/REAL_L)
+  yOriginTransformed = int(MATRIX_L*(yOrigin-ymin)/REAL_L)
+  return xOriginTransformed, yOriginTransformed
 
-maxX = matrix[:, 0].max()
-maxY = matrix[:, 1].max()
+print("\n")
 
+coordinatesTransformed = set_seeds(coordsX, coordsY, xOrigin, yOrigin)
 
-# get max x value from matrix
-# get max y value from matrix
+voronoi(matrix, seeds_x, seeds_y, n_seeds, threaded)
 
-plt.plot(matrix[:, 0], matrix[:, 1], 'o')
-plt.title('Restaurants near your location')
-plt.xlabel('Longitude')
-plt.ylabel('Latitude')
-plt.axis('equal')
+# transform matrix into a 2D numpy array
+matrix = np.ctypeslib.as_array(matrix)
+matrix = matrix.reshape(MATRIX_L, MATRIX_L)
+
+# plot matrix
+plt.imshow(matrix, cmap='gray')
 plt.show()
-
-maxXY = max(maxX, maxY)
-
-# find n given that 2^n is greater or equal than maxXY
-n = int(math.log(maxXY, 2)) + 1
-print(matrix)
-print()
-print(originTransformed)
-
-def writeNumpyMatrixToFile(filename, matrix):
-    with open(filename, 'w') as f:
-        for row in matrix:
-            for element in row:
-                f.write(str(element) + ' ')
-            f.write('\n')
-
-# writeNumpyMatrixToFile('./cMultithread/input.txt',matrix)

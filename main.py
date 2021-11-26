@@ -6,6 +6,7 @@ import math
 from constants import AMENITIES, OVERPASS_URL
 import matplotlib
 import random
+from ctypes import *
 
 # filename: written file by c function
 # n: 2^n = length of matrix
@@ -168,37 +169,101 @@ def plotHelper(matrix, pointsData, matrixSeeds, originTransformed):
         transparent=True,
         pad_inches=0,
         dpi=600)
-    os.system(
-        'convert out.png -fuzz 20% -fill none -draw "matte 0,0 floodfill" outTransparent.png')
 
 
 def selectedSeed(matrix, originTransformed, pointsData):
     idSelected = matrix[int(originTransformed[0])][int(originTransformed[1])]
     print(pointsData[int(idSelected)])
 
+def getMatrixFromData(data):
+    coordsX = []
+    coordsY = []
+    pointsData = []
+    i = 0
+    for element in data['elements']:
+        if element['type'] == 'node':
+            lat = element['lat']
+            lon = element['lon']
+            coordsY.append(lat)
+            coordsX.append(lon)
+            pointsData.append((i, element))
+            i += 1
+        elif 'center' in element:
+            lat = element['center']['lat']
+            lon = element['center']['lon']
+            coordsY.append(lat)
+            coordsX.append(lon)
+            pointsData.append((i, element))
+            i += 1
+    return coordsX, coordsY, pointsData
+
+def set_seeds(X, Y, xOrigin, yOrigin, n_seeds, seeds_x, seeds_y, MATRIX_L): # X and Y are arrays
+    xmax = max(X)
+    ymax = max(Y)
+    xmin = min(X)
+    ymin = min(Y)
+    REAL_L = max(xmax - xmin, ymax - ymin)
+    n_seeds = len(X)
+    for i in range(n_seeds):
+      seeds_x[i] = c_int(int(MATRIX_L*(X[i]-xmin)/REAL_L))
+      seeds_y[i] = c_int(int(MATRIX_L*(Y[i]-ymin)/REAL_L))
+    xOriginTransformed = int(MATRIX_L*(xOrigin-xmin)/REAL_L)
+    yOriginTransformed = int(MATRIX_L*(yOrigin-ymin)/REAL_L)
+    return xOriginTransformed, yOriginTransformed, n_seeds
+
+
+def getDataFromFunction(X, Y, xOrigin, yOrigin, max_seeds):
+    CVoronoi  = CDLL(os.path.abspath("./cMultithread/voronoi_2048.so"))
+    voronoi = CVoronoi.voronoi_2048
+    voronoi.argtypes = [POINTER(c_uint16), POINTER(c_int), POINTER(c_int), c_int, c_int]
+
+    MATRIX_L = 2048 #Don't change 2048
+    MAX_SEEDS = max_seeds #Realistic max (to avoid realloc)
+
+    matrix = (c_uint16*(MATRIX_L*MATRIX_L))()
+    seeds_x = (c_int*MAX_SEEDS)()
+    seeds_y = (c_int*MAX_SEEDS)()
+    n_seeds = 0 #This will be setted with set_seeds, dont change it manually
+    threaded = 1 # 1 yes, 0 no, you choose
+
+    xOriginTransformed, yOriginTransformed, n_seeds = set_seeds(X, Y, xOrigin, yOrigin, n_seeds, seeds_x, seeds_y, MATRIX_L)
+
+    voronoi(matrix, seeds_x, seeds_y, n_seeds, threaded)
+
+    seeds_x = np.array(seeds_x)
+    seeds_y = np.array(seeds_y)
+
+    seedsCord = np.column_stack((seeds_y, seeds_x))
+    
+    return matrix, n_seeds, xOriginTransformed, yOriginTransformed, MATRIX_L, seedsCord
+
 
 if __name__ == '__main__':
     # set location of script to location of this file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    meters = 1000
-    scale = 2**26
-    amenity = AMENITIES[12]
-    # amenity = AMENITIES[5]
-    # amenity = AMENITIES[17]
+    meters = 2000
+    # amenity = AMENITIES[12]
+    amenity = 'school'
     coordinates = getMyCoordinates()
     dataOverpass = getHospitalsQuery(
         meters, amenity, coordinates[0], coordinates[1])
 
-    matrixSeeds, n, originTransformed, pointsData = getMatrixFormatted(
-        dataOverpass, coordinates, scale)
 
-    writeNumpyMatrixToFile('./cMultithread/input.txt', matrixSeeds)
+    coordsX, coordsY, pointsData = getMatrixFromData(dataOverpass)
 
-    matrix = getMatrixFromCFunction(n, len(pointsData), 3)
+    MAX_SEEDS = len(pointsData)
 
-    maxRadius = transformMatrix(matrix, matrixSeeds, originTransformed)
+    yOrigin, xOrigin = coordinates
+    yOrigin = float(yOrigin)
+    xOrigin = float(xOrigin)
+    
+    matrix, n_seeds, xOriginTransformed, yOriginTransformed, MATRIX_L, coords  = getDataFromFunction(coordsX, coordsY, xOrigin, yOrigin, MAX_SEEDS)
 
-    print(selectedSeed(matrix, originTransformed, pointsData))
+    matrix = np.ctypeslib.as_array(matrix)
+    matrix = matrix.reshape(MATRIX_L, MATRIX_L)
 
-    plotHelper(matrix, pointsData, matrixSeeds, originTransformed)
+    plotHelper(matrix, pointsData, coords, (xOriginTransformed, yOriginTransformed))
+
+    selectedSeedM = matrix[xOriginTransformed][yOriginTransformed]
+    print(pointsData[selectedSeedM] )

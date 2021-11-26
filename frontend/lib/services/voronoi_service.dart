@@ -109,7 +109,7 @@ class VoronoiResponse {
   }
 }
 
-const String baseURL = "http://192.168.1.11:4999";
+const String baseURL = "http://192.168.1.4:4999";
 
 class VoronoiService {
   static getAmenities() async {
