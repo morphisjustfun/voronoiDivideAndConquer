@@ -20,7 +20,6 @@ class Result extends HookWidget {
   @override
   Widget build(BuildContext context) {
     var base1 = useState("");
-    var base2 = useState("");
     var seedResult = useState("");
     return Scaffold(
         appBar: AppBar(
@@ -32,7 +31,7 @@ class Result extends HookWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Text(
-              'You are looking for $amenity within $metersAround meters around',
+              'You are looking for $amenity within $metersAround meters',
               style: Theme.of(context).textTheme.bodyText1,
               textAlign: TextAlign.center,
             ),
@@ -43,7 +42,6 @@ class Result extends HookWidget {
                     locationData, amenity, metersAround);
 
                 base1.value = result.encodedImg;
-                base2.value = result.encodedImg2;
                 seedResult.value = result.seedResult.toString();
               },
             ),

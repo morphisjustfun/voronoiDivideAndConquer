@@ -59,15 +59,21 @@ for element in data['elements']:
     if element['type'] == 'node':
         lat = element['lat']
         lon = element['lon']
-        coordsY.append(lat)
-        coordsX.append(lon)
+        coordsY.append(lon)
+        coordsX.append(lat)
     elif 'center' in element:
         lat = element['center']['lat']
         lon = element['center']['lon']
-        coordsY.append(lat)
-        coordsX.append(lon)
+        coordsY.append(lon)
+        coordsX.append(lat)
+
+# plot coordsX and coordsY
+plt.plot(coordsX, coordsY, 'ro')
+plt.title('Schools around 1km')
+plt.show()
 
 
+"""
 yOrigin, xOrigin = coordinates
 yOrigin = float(yOrigin)
 xOrigin = float(xOrigin)
@@ -117,3 +123,4 @@ matrix = matrix.reshape(MATRIX_L, MATRIX_L)
 # plot matrix
 plt.imshow(matrix, cmap='gray')
 plt.show()
+"""

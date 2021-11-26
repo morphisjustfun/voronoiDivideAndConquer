@@ -23,10 +23,9 @@ def getVoronoi():
         amenity = data["amenity"]
         lat = data["geolocation"]["lat"]
         lon = data["geolocation"]["lon"]
-        scale = 2**26
         coordinates = (lat, lon)
 
-        dataOverpass = getHospitalsQuery(
+        dataOverpass = getQuery(
             meters, amenity, coordinates[0], coordinates[1])
 
         coordsX, coordsY, pointsData = getMatrixFromData(dataOverpass)
@@ -55,8 +54,7 @@ def getVoronoi():
         return jsonify(
             {
                 "seedResult": selectedSeedM,
-                "encoded_img": encoded_img,
-                "encoded_img2": encoded_img
+                "encoded_img": encoded_img
             }
         )
     return Response(status=400)

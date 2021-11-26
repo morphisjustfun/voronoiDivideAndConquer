@@ -1,4 +1,5 @@
 import os
+import json
 import numpy as np
 import requests
 import matplotlib.pyplot as plt
@@ -36,8 +37,8 @@ def writeNumpyMatrixToFile(filename, matrix):
             f.write('\n')
 
 
-def getHospitalsQuery(meters, amenity, latitude, longitude):
-    query = '''[out:json][timeout:25];
+def getQuery(meters, amenity, latitude, longitude):
+    query = '''[out:json];
     (
     nwr["amenity"="{}"](around:{},{},{});
     );
@@ -162,13 +163,15 @@ def plotHelper(matrix, pointsData, matrixSeeds, originTransformed):
             c='white',
             s=10,
             edgecolors=['black'])
-    plt.axis('off')
-    plt.savefig(
-        'out.png',
-        bbox_inches='tight',
-        transparent=True,
-        pad_inches=0,
-        dpi=600)
+    # plt.axis('off')
+    plt.title('Schools around 1km')
+    plt.show()
+    # plt.savefig(
+    #     'out.png',
+    #     bbox_inches='tight',
+    #     transparent=True,
+    #     pad_inches=0,
+    #     dpi=600)
 
 
 def selectedSeed(matrix, originTransformed, pointsData):
@@ -237,16 +240,19 @@ def getDataFromFunction(X, Y, xOrigin, yOrigin, max_seeds):
     
     return matrix, n_seeds, xOriginTransformed, yOriginTransformed, MATRIX_L, seedsCord
 
+def prettyPrintJSON(data):
+    print(json.dumps(data, indent=4, sort_keys=True))
+
 
 if __name__ == '__main__':
     # set location of script to location of this file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    meters = 2000
+    meters = 1000
     # amenity = AMENITIES[12]
     amenity = 'school'
     coordinates = getMyCoordinates()
-    dataOverpass = getHospitalsQuery(
+    dataOverpass = getQuery(
         meters, amenity, coordinates[0], coordinates[1])
 
 
@@ -266,4 +272,4 @@ if __name__ == '__main__':
     plotHelper(matrix, pointsData, coords, (xOriginTransformed, yOriginTransformed))
 
     selectedSeedM = matrix[xOriginTransformed][yOriginTransformed]
-    print(pointsData[selectedSeedM] )
+    prettyPrintJSON(pointsData[selectedSeedM][1])

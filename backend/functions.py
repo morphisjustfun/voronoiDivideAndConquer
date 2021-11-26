@@ -36,8 +36,8 @@ def writeNumpyMatrixToFile(filename, matrix):
             f.write('\n')
 
 
-def getHospitalsQuery(meters, amenity, latitude, longitude):
-    query = '''[out:json][timeout:25];
+def getQuery(meters, amenity, latitude, longitude):
+    query = '''[out:json];
     (
     nwr["amenity"="{}"](around:{},{},{});
     );

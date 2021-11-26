@@ -92,18 +92,15 @@ class VoronoiRequest {
 
 class VoronoiResponse {
   final String encodedImg;
-  final String encodedImg2;
   final List<dynamic> seedResult;
 
   VoronoiResponse(
       {required this.encodedImg,
-      required this.encodedImg2,
       required this.seedResult});
 
   factory VoronoiResponse.fromJson(Map<String, dynamic> json) {
     return VoronoiResponse(
       encodedImg: json['encoded_img'],
-      encodedImg2: json['encoded_img2'],
       seedResult: json['seedResult'],
     );
   }
