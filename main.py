@@ -4,7 +4,7 @@ from dot import *
 
 #Global DLL
 
-CVoronoi  = CDLL(os.path.abspath("cMultithread/bridge.so"))
+CVoronoi  = CDLL(os.path.abspath("bridge.so"))
 voronoi = CVoronoi.voronoi_L
 voronoi.argtypes = [POINTER(c_uint16), POINTER(c_uint16), POINTER(c_int), POINTER(c_int), c_int, c_int]
 
@@ -45,12 +45,7 @@ def execute(seeds, threaded):
         Y.append(seed[1])
     setSeeds(X, Y)
 
-    
 
-
-# for j in range(MATRIX_L):
-#     for i in range(MATRIX_L):
-#         print(matrix[i*MATRIX_L + j], end=' ')
 
 dots = []
 for i in range(N):
@@ -85,7 +80,7 @@ while 1:
 
     for j in range(MATRIX_L):
         for i in range(MATRIX_L):
-            c = matrix[i*MATRIX_L + j]*2
+            c = matrix[i*MATRIX_L + j]*1.5
             if c > 255: c = 255
             elif c < 0: c = 0
             c = (255 - c)
