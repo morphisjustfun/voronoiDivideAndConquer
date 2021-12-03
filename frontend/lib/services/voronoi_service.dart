@@ -93,10 +93,13 @@ class VoronoiRequest {
 class VoronoiResponse {
   final String encodedImg;
   final List<dynamic> seedResult;
+  bool success = true;
 
   VoronoiResponse(
       {required this.encodedImg,
-      required this.seedResult});
+      required this.seedResult, bool success = true}){
+      this.success = success;
+  }
 
   factory VoronoiResponse.fromJson(Map<String, dynamic> json) {
     return VoronoiResponse(
@@ -106,7 +109,7 @@ class VoronoiResponse {
   }
 }
 
-const String baseURL = "http://192.168.1.4:4999";
+const String baseURL = "http://192.168.1.4:8080";
 
 class VoronoiService {
   static getAmenities() async {
@@ -137,7 +140,11 @@ class VoronoiService {
           HttpHeaders.connectionHeader: 'keep-alive',
         },
         body: body);
-
-    return VoronoiResponse.fromJson(json.decode(response.body));
+   // check response status
+      if (response.statusCode == 200) {
+         return VoronoiResponse.fromJson(json.decode(response.body));
+      } else {
+         return VoronoiResponse(encodedImg:"",seedResult:[],success: false);
+      }
   }
 }

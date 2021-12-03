@@ -169,6 +169,7 @@ def plotHelper(matrix, pointsData, matrixSeeds, originTransformed):
         transparent=True,
         pad_inches=0,
         dpi=600)
+    plt.clf()
 
 
 def selectedSeed(matrix, originTransformed, pointsData):

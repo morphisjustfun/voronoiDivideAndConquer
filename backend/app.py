@@ -1,11 +1,15 @@
 from flask import Flask, request, jsonify, Response
+from datetime import datetime
 from base64 import encodebytes
 from functions import *
 import json
 import io
 from constants import AMENITIES
 import os
-from PIL import Image
+import pyimgur
+
+CLIENT_ID = os.environ['IMGUR_CLIENT_ID']
+im = pyimgur.Imgur(CLIENT_ID)
 
 app = Flask(__name__)
 
@@ -36,30 +40,30 @@ def getVoronoi():
         yOrigin = float(yOrigin)
         xOrigin = float(xOrigin)
 
-        matrix, n_seeds, xOriginTransformed, yOriginTransformed, MATRIX_L, coords  = getDataFromFunction(coordsX, coordsY, xOrigin, yOrigin, MAX_SEEDS)
-
+        matrix, n_seeds, xOriginTransformed, yOriginTransformed, MATRIX_L, coords = getDataFromFunction(
+            coordsX, coordsY, xOrigin, yOrigin, MAX_SEEDS)
 
         matrix = np.ctypeslib.as_array(matrix)
         matrix = matrix.reshape(MATRIX_L, MATRIX_L)
 
-        plotHelper(matrix, pointsData, coords, (xOriginTransformed, yOriginTransformed))
+        plotHelper(matrix, pointsData, coords,
+                   (xOriginTransformed, yOriginTransformed))
 
-        pil_img = Image.open('out.png', mode='r')
-        byte_arr = io.BytesIO()
-        pil_img.save(byte_arr, format='PNG')
-        encoded_img = encodebytes(byte_arr.getvalue()).decode('ascii').replace('\n', '')
+        # current date with title
+        uploadedImage = im.upload_image('out.png', title=f'Flutter-Voronoi-{datetime.now()}')
 
-        selectedSeedM = pointsData[matrix[xOriginTransformed][yOriginTransformed]]
+        selectedSeedM = pointsData[matrix[xOriginTransformed]
+                                   [yOriginTransformed]]
 
-        return jsonify(
-            {
-                "seedResult": selectedSeedM,
-                "encoded_img": encoded_img
-            }
-        )
+        jsonMessage = json.dumps({
+            "seedResult": selectedSeedM,
+            "encoded_img": uploadedImage.link
+        })
+
+        return Response(jsonMessage, mimetype='application/json', status=200)
     return Response(status=400)
 
 
 if __name__ == '__main__':
-    os.system("gcc -shared -o ../cMultithread/voronoi_2048.so -fPIC ../cMultithread/voronoi_2048.c")
-    app.run()
+    # os.system("gcc -shared -o ../cMultithread/voronoi_2048.so -fPIC ../cMultithread/voronoi_2048.c")
+    app.run(host='0.0.0.0', port=8000)
